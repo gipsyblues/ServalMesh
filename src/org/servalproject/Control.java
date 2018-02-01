@@ -921,7 +921,7 @@ public class Control extends Service {
 				clientACK = false;
 				int collect_num = 10;
 				String thisTimeMAC = record.get("MAC").toString();//record是對方的服務內容（在discovery Service時指定了record=re_record）
-				while (collect_num > 0) {
+				while (collect_num > 0) {//共跑10次,最多存10筆不同device's info
 					record_set.put(record.get("SSID").toString(), record);//將蒐集到的其他裝置的服務根據SSID存放個別的服務
 					Thread.sleep(100);
 					collect_num--;
@@ -960,7 +960,7 @@ public class Control extends Service {
 					if(Name.equals("AutoFalse")) {
 						continue;
 					}
-					if(!Name.equals(Cluster_Name)) {//Name!=Cluster_Name則進入,應該是蒐集到的device的Cluster_Name和自己的Cluster_Name不相同
+					if(!Name.equals(Cluster_Name)) {//列出和自己不同cluster name的device,Name!=Cluster_Name則進入,應該是蒐集到的device的Cluster_Name和自己的Cluster_Name不相同
 						Step1Data_set data = new Step1Data_set(SSID, key, Name, In_ac, PEER, MAC, POWER, GO);//這邊應該是用來Cluster Initialization用,投影片p25
 						if (!Collect_record.contains(data)) {//判斷Collect_record內是否已經有data, Collect_record是專門儲存別的device的data,不過下面幾行的code也是有儲存自己device的info
 							Collect_record.add(data);//沒有的話則將data加入到Collect_record
@@ -2198,11 +2198,11 @@ public class Control extends Service {
 							// TTL -1
 							temp[5] = String.valueOf(Integer.valueOf(temp[5]) - 1);
 							// update peer table
-							if (IsInitial) {
+							if (IsInitial) {//IsInitial的用意是,當還沒跑完整個Initial的thread時,他的值為true,因此要讓client這些角色接收go的cluster name,在將自己的cluster name更新成go的(在跑完initial之前)
 								if (ROLE == RoleFlag.NONE.getIndex() || ROLE == RoleFlag.RELAY.getIndex()
 										|| ROLE == RoleFlag.CLIENT.getIndex() || ROLE == RoleFlag.WIFI_CLIENT.getIndex()) {//此裝置不是GO角色
 									if (Integer.valueOf(temp[2]) == RoleFlag.GO.getIndex()) {//收到的data是GO
-										if (IsReceiveGoInfo==false) {
+										if (IsReceiveGoInfo==false) {//還沒收過go的,表示client還沒更新cluster name(要更新為go的)
 											Cluster_Name = temp[1];//把自己的Cluster_Name更新成GO的Cluster_Name
 										} else {//已經接收過GO的data
 											if (Newcompare(Cluster_Name, temp[1]) <= 0) {//此裝置的Cluster_Name字典序或是長度比這次收到的data(GO)還小
@@ -2222,7 +2222,7 @@ public class Control extends Service {
 									}//End temp[2]==RELAY||CLIENT
 								}//End ROLE==NONE||RELAY||CLIENT||WIFI_CLIENT 
 							}//End Isinitial
-							else {//170907不懂Isinitial是否為true&false的差別
+							else {//跑完initial(),因此Isinitial變為false了
 								if (Integer.valueOf(temp[2]) == RoleFlag.GO.getIndex()) {//接收到的info是從GO傳送來的
 									IsReceiveGoInfo = true;
 								}else if (Integer.valueOf(temp[2]) == RoleFlag.RELAY.getIndex() ||(Integer.valueOf(temp[2]) == RoleFlag.CLIENT.getIndex() )){
